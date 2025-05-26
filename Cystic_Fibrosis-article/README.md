@@ -1,0 +1,3 @@
+Lay Summary 
+Cystic fibrosis (CF) is caused by changes in the CFTR gene. We analyzed 10,282 genetic tests for CFTR variants conducted at a U.S. diagnostic laboratory from 2014 to 2025. Only 3% carried a disease-causing variant and most of those had the well-known F508del change. Almost every variant-positive sample was automatically flagged “abnormal”, con-firming that the laboratory screen works well. We also trained a computer model that used basic information—patient age, specimen type, and a handful of key variants—to predict abnormal results. It was correct more than nine times out of ten.
+The study shows that harmful CF variants are now rare in routine adult testing and that sim-ple machine-learning tools can safely speed up result review.
