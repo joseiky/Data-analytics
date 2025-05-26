@@ -15,4 +15,3 @@ unique_sources = sorted(unique_sources)
 # Print each unique source
 for source in unique_sources:
     print(source)
-
