@@ -1,0 +1,27 @@
+# Load necessary libraries
+install.packages(c("ggplot2", "gplots", "dendextend", "readxl"))
+library(ggplot2)
+library(gplots)
+library(dendextend)
+library(readxl)
+
+# Step 1: Load the Data
+data_path <- "E:\\Student's works\\MDL articles\\HPV-BV article\\Cleaned HPV-BV data.xlsx"
+df <- readxl::read_excel(data_path, sheet = 1)
+
+# Step 2: Preprocess the Data
+df_clustering <- df[, !(names(df) %in% c('Sample #', 'AGE', 'BV Status', 'CERVICAL CYTOLOGY\'\''))]
+df_clustering <- data.frame(lapply(df_clustering, function(x) if(is.factor(x)) as.numeric(as.character(x)) else x))
+
+# Step 3: Perform Hierarchical Clustering on a Sample
+set.seed(123) # For reproducibility
+df_sample <- df_clustering[sample(1:nrow(df_clustering), 5000), ]
+dist_matrix_sample <- dist(df_sample, method = "euclidean")
+hc_sample <- hclust(dist_matrix_sample, method = "ward.D2")
+
+# Step 4: Plot and Save the Customized Dendrogram
+png("dendrogram_sampled_k8.png")
+dend <- as.dendrogram(hc_sample)
+dend_colored <- color_branches(dend, k=8)
+plot(dend_colored, main = "Hierarchical Clustering Dendrogram (Sampled, k=8)", sub = "")
+dev.off()

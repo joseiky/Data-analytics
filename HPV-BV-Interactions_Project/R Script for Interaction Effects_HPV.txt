@@ -1,0 +1,50 @@
+library(readxl)
+library(nnet)
+library(broom)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tibble) # Ensure tibble is loaded
+
+# Corrected Windows path for the dataset
+dataset_path <- "E:\\Student's works\\MDL articles\\HPV-BV article\\Cleaned HPV-BV data.xlsx"
+
+# Load the dataset
+df <- read_excel(dataset_path)
+
+# Convert 'CERVICAL_CYTOLOGY' to a factor for multinomial logistic regression
+df$CERVICAL_CYTOLOGY <- as.factor(df$CERVICAL_CYTOLOGY)
+
+# Identify HPV types columns
+hpv_types <- names(df)[grepl("^HPV_", names(df))]
+
+# Generate interaction terms and add them to the dataframe
+for (i in 1:(length(hpv_types) - 1)) {
+  for (j in (i + 1):length(hpv_types)) {
+    interaction_term <- paste(hpv_types[i], hpv_types[j], sep = "_x_")
+    df[[interaction_term]] <- df[[hpv_types[i]]] * df[[hpv_types[j]]]
+  }
+}
+
+# Build the formula for the multinomial logistic regression model
+formula_str <- paste("CERVICAL_CYTOLOGY", "~", paste(c(hpv_types, names(df)[grepl("_x_", names(df))]), collapse = " + "))
+
+# Fit the multinomial logistic regression model using 'multinom' from the 'nnet' package
+model <- multinom(as.formula(formula_str), data = df)
+
+# Extracting coefficients, standard errors, z-values, and p-values
+model_summary <- summary(model)
+coef_df <- coef(model_summary) # Coefficients
+std_err <- sqrt(diag(vcov(model))) # Standard errors
+z_values <- coef_df / std_err # Z-values
+p_values <- 2 * (1 - pnorm(abs(z_values))) # Two-tailed p-values
+
+# Create a dataframe to hold results
+results_df <- cbind(coef_df, std_err, z_values, p_values)
+results_df <- as.data.frame(results_df)
+names(results_df) <- c("Coefficient", "StandardError", "ZValue", "PValue")
+results_df$Term <- row.names(results_df)
+results_df <- results_df[, c("Term", "Coefficient", "StandardError", "ZValue", "PValue")]
+
+# Saving the results to a CSV file
+write.csv(results_df, "E:\\Student's works\\MDL articles\\HPV-BV article\\HPV_Interaction_Coefficients_with_Stats.csv", row.names = FALSE)
