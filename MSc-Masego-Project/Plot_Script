@@ -1,1 +1,65 @@
+import matplotlib
+matplotlib.use('Agg')
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the Excel file
+file_path = '/mnt/e/Student\'s works/Masego Mmatli/Last Article/Table S_DEGs.xlsx'
+excel_data = pd.ExcelFile(file_path)
+
+# Specify the sheets to include (excluding 'B2' and including 'H3')
+selected_sheets = ['Kp_4', 'Kp_14', 'Kp_15', 'Kp24', 'G3', 'G5', 'G8', 'A5', 'H3']
+
+# Prepare the data for the box and whiskers plot
+boxplot_data = pd.DataFrame()
+
+for sheet in selected_sheets:
+    df = excel_data.parse(sheet)
+    df['Strain'] = sheet
+    boxplot_data = pd.concat([boxplot_data, df[['Fold change', 'Strain']]])
+
+# Convert Fold change to numeric
+boxplot_data['Fold change'] = pd.to_numeric(boxplot_data['Fold change'], errors='coerce')
+
+# Reset the index to handle duplicate labels
+boxplot_data = boxplot_data.reset_index(drop=True)
+
+# Plot the box and whiskers plot
+plt.figure(figsize=(12, 6))
+sns.boxplot(x='Strain', y='Fold change', data=boxplot_data)
+plt.yscale('log')
+plt.title('Distribution of Fold Changes for Significant Genes Across Strains (Excluding B2)')
+plt.ylabel('Fold Change')
+plt.xlabel('Strain')
+plt.savefig('boxplot.png')  # Save the plot as a PNG file
+
+# Prepare data for the heatmap
+heatmap_data = pd.DataFrame()
+
+# Extract necessary columns and count DEGs within each category for each strain
+for sheet in selected_sheets:
+    df = excel_data.parse(sheet)
+    df['Strain'] = sheet
+    category_counts = df.groupby('Product').size().reset_index(name='Count of DEGs')
+    category_counts['Strain'] = sheet
+    heatmap_data = pd.concat([heatmap_data, category_counts])
+
+# Filter to top functional categories by DEG count
+top_categories = heatmap_data.groupby('Product')['Count of DEGs'].sum().nlargest(15).index
+heatmap_data_top = heatmap_data[heatmap_data['Product'].isin(top_categories)]
+
+# Pivot the data for the heatmap
+heatmap_pivot = heatmap_data_top.pivot('Product', 'Strain', 'Count of DEGs').fillna(0)
+
+# Reset the index to handle duplicate labels
+heatmap_pivot = heatmap_pivot.reset_index()
+
+# Plot the heatmap
+plt.figure(figsize=(14, 8))
+sns.heatmap(heatmap_pivot.set_index('Product'), annot=True, fmt=".0f", cmap='viridis')
+plt.title('Heat Map of Functional Categories for DEGs Across Strains (Excluding B2)')
+plt.xlabel('Strain')
+plt.ylabel('Functional Category')
+plt.savefig('heatmap.png')  # Save the plot as a PNG file
 
